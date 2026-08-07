@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TorBox Bulk Cache Checker</title>
+<style>
+  :root {
+    --bg: #f6f4ef; --panel: #ffffff; --ink: #1a1815; --ink-soft: #5a544b;
+    --line: #e6e1d6; --accent: #b8541a; --accent-soft: #f2e2d0;
+    --ok: #2f6b3a; --ok-soft: #e0eede; --no: #a02929; --no-soft: #f2dcdc;
+    --warn: #8a6d1a; --warn-soft: #f2ead0;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14130f; --panel: #1c1a16; --ink: #ece7dc; --ink-soft: #97907f;
+      --line: #2a2721; --accent: #e08a4a; --accent-soft: #3a2618;
+      --ok: #7bc088; --ok-soft: #1c2a1e; --no: #e07070; --no-soft: #2a1818;
+      --warn: #d9b95a; --warn-soft: #2a2418;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--sans);
+    margin: 0; padding: 32px 24px 80px; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+  header { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  header .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); }
+  header h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+  header p { margin: 0; color: var(--ink-soft); font-size: 14px; max-width: 62ch; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-soft); display: block; margin-bottom: 6px; }
+  input[type="password"], input[type="text"] {
+    background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 10px 12px; font-family: var(--mono); font-size: 13px;
+    width: 100%;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button { background: var(--ink); color: var(--bg); border: 0; padding: 10px 16px;
+    border-radius: 6px; font: inherit; font-weight: 500; cursor: pointer; }
+  button.primary { background: var(--accent); color: #fff; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  .drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 36px 20px;
+    text-align: center; color: var(--ink-soft); cursor: pointer; transition: 0.15s; }
+  .drop.hover { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
+  .drop strong { color: var(--ink); font-weight: 600; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .stat { padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .stat .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-soft); }
+  .stat .v { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .stat.ok .v { color: var(--ok); } .stat.no .v { color: var(--no); }
+  .stat.pending .v { color: var(--warn); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-soft); font-weight: 500;
+    background: var(--panel); position: sticky; top: 0; }
+  tr:last-child td { border-bottom: 0; }
+  td.name { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  td.hash { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+  td.size { font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono);
+    font-size: 11px; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.no { background: var(--no-soft); color: var(--no); }
+  .pill.pending { background: var(--warn-soft); color: var(--warn); }
+  .pill.err { background: var(--no-soft); color: var(--no); }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .toolbar .grow { flex: 1; }
+  .muted { color: var(--ink-soft); font-size: 12px; }
+  .err { color: var(--no); font-size: 13px; }
+  footer { color: var(--ink-soft); font-size: 12px; text-align: center; padding-top: 12px; }
+  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="eyebrow">TorBox · Bulk Cache Check</span>
+    <h1>Drop torrent files. See what's cached.</h1>
+    <p>Parses each <code>.torrent</code> in your browser to compute its infohash, then batches
+      them against TorBox's <code>/torrents/checkcached</code>. Your API key never leaves this page.</p>
+  </header>
+
+  <div class="card">
+    <label for="key">API Key</label>
+    <div class="row">
+      <input id="key" type="password" placeholder="Paste your TorBox API token" autocomplete="off" />
+      <button class="ghost" id="save">Remember locally</button>
+    </div>
+    <div class="muted" style="margin-top:8px">Stored only in your browser's localStorage if you click Remember.</div>
+    <div style="margin-top:14px">
+      <label for="proxy">API Base (optional proxy)</label>
+      <input id="proxy" type="text" placeholder="https://your-worker.workers.dev  (leave blank to hit api.torbox.app directly)" />
+      <div class="muted" style="margin-top:6px">TorBox's API doesn't send CORS headers to browsers, so on a hosted site
+        you'll need to point this at your Cloudflare Worker (see the worker.js file).</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <label class="drop" id="drop" for="file">
+      <strong>Drop .torrent files here</strong> or tap to select — bulk selection works.
+      <input type="file" id="file" multiple style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" />
+    </label>
+    <div class="toolbar" style="margin-top:14px">
+      <span class="muted grow" id="count">No files loaded.</span>
+      <button class="ghost" id="clear" disabled>Clear</button>
+      <button class="ghost" id="export" disabled>Export CSV</button>
+      <button class="primary" id="check" disabled>Check cached</button>
+    </div>
+    <div class="err" id="err" style="margin-top:8px"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="k">Total</div><div class="v" id="s-total">0</div></div>
+    <div class="stat ok"><div class="k">Cached</div><div class="v" id="s-ok">0</div></div>
+    <div class="stat no"><div class="k">Uncached</div><div class="v" id="s-no">0</div></div>
+    <div class="stat pending"><div class="k">Pending</div><div class="v" id="s-pending">0</div></div>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr>
+        <th style="width:120px">Status</th>
+        <th>Name</th>
+        <th style="width:110px">Size</th>
+        <th style="width:220px">Infohash</th>
+      </tr></thead>
+      <tbody id="tbody">
+        <tr><td colspan="4" class="muted" style="padding:24px; text-align:center">
+          Load some torrent files to begin.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>Requests go from your browser directly to the API base you configure.</footer>
+</div>
+
+<script>
+function decodeBencode(buf) {
+  const bytes = new Uint8Array(buf);
+  let i = 0;
+  const infoRanges = {};
+  function readInt(term) {
+    let n = ''; while (bytes[i] !== term.charCodeAt(0)) { n += String.fromCharCode(bytes[i++]); }
+    i++; return parseInt(n, 10);
+  }
+  function decode() {
+    const c = String.fromCharCode(bytes[i]);
+    if (c === 'i') { i++; return readInt('e'); }
+    if (c === 'l') { i++; const a = []; while (String.fromCharCode(bytes[i]) !== 'e') a.push(decode()); i++; return a; }
+    if (c === 'd') {
+      i++; const o = {};
+      while (String.fromCharCode(bytes[i]) !== 'e') {
+        const k = decode();
+        const key = typeof k === 'string' ? k : new TextDecoder().decode(k);
+        const startVal = i;
+        const v = decode();
+        if (key === 'info') infoRanges.info = [startVal, i];
+        o[key] = v;
+      }
+      i++; return o;
+    }
+    if (c >= '0' && c <= '9') {
+      const len = readInt(':');
+      const slice = bytes.slice(i, i + len); i += len;
+      try { return new TextDecoder('utf-8', {fatal: true}).decode(slice); }
+      catch { return slice; }
+    }
+    throw new Error('bencode parse error at ' + i);
+  }
+  const root = decode();
+  return { root, infoBytes: infoRanges.info ? bytes.slice(infoRanges.info[0], infoRanges.info[1]) : null };
+}
+
+async function sha1Hex(bytes) {
+  const digest = await crypto.subtle.digest('SHA-1', bytes);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function humanBytes(n) {
+  if (!n && n !== 0) return '';
+  const u = ['B','KB','MB','GB','TB']; let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return n.toFixed(n >= 10 || i === 0 ? 0 : 1) + ' ' + u[i];
+}
+
+const items = new Map();
+const el = id => document.getElementById(id);
+const tbody = el('tbody'), keyInput = el('key');
+if (localStorage.torboxKey) keyInput.value = localStorage.torboxKey;
+const proxyInput = el('proxy');
+if (localStorage.torboxProxy) proxyInput.value = localStorage.torboxProxy;
+proxyInput.onchange = () => { localStorage.torboxProxy = proxyInput.value.trim(); };
+
+el('save').onclick = () => {
+  localStorage.torboxKey = keyInput.value.trim();
+  el('save').textContent = 'Saved';
+  setTimeout(() => el('save').textContent = 'Remember locally', 1200);
+};
+
+const drop = el('drop'), fileInput = el('file');
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('hover'); };
+drop.ondragleave = () => drop.classList.remove('hover');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('hover'); handleFiles(e.dataTransfer.files); };
+fileInput.onchange = () => { handleFiles(fileInput.files); fileInput.value = ''; };
+
+async function handleFiles(fileList) {
+  el('err').textContent = '';
+  const errs = [];
+  for (const f of fileList) {
+    try {
+      const buf = await f.arrayBuffer();
+      const { root, infoBytes } = decodeBencode(buf);
+      if (!infoBytes) throw new Error('no info dict');
+      const hash = await sha1Hex(infoBytes);
+      const info = root.info || {};
+      let size = 0;
+      if (typeof info.length === 'number') size = info.length;
+      else if (Array.isArray(info.files)) size = info.files.reduce((a,x) => a + (x.length || 0), 0);
+      const name = info.name || f.name.replace(/\.torrent$/i, '');
+      if (!items.has(hash)) items.set(hash, { name, size, status: 'idle', filename: f.name });
+    } catch (e) { errs.push(f.name + ': ' + e.message); }
+  }
+  if (errs.length) el('err').textContent = errs.join(' · ');
+  render();
+}
+
+function render() {
+  const n = items.size;
+  el('count').textContent = n ? n + ' torrent' + (n === 1 ? '' : 's') + ' loaded' : 'No files loaded.';
+  el('check').disabled = n === 0;
+  el('clear').disabled = n === 0;
+  el('export').disabled = n === 0;
+
+  let ok = 0, no = 0, pend = 0;
+  for (const v of items.values()) {
+    if (v.status === 'cached') ok++;
+    else if (v.status === 'uncached') no++;
+    else if (v.status === 'checking' || v.status === 'idle') pend++;
+  }
+  el('s-total').textContent = n; el('s-ok').textContent = ok;
+  el('s-no').textContent = no; el('s-pending').textContent = pend;
+
+  if (n === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="muted" style="padding:24px; text-align:center">Load some torrent files to begin.</td></tr>';
+    return;
+  }
+  const rows = [...items.entries()].map(([hash, v]) => {
+    const pill = {
+      idle:     '<span class="pill pending">pending</span>',
+      checking: '<span class="pill pending">checking</span>',
+      cached:   '<span class="pill ok">cached</span>',
+      uncached: '<span class="pill no">uncached</span>',
+      error:    '<span class="pill err">error</span>',
+    }[v.status] || v.status;
+    return '<tr><td>' + pill + '</td><td class="name" title="' + escapeHtml(v.name) + '">' +
+      escapeHtml(v.name) + '</td><td class="size">' + humanBytes(v.size) +
+      '</td><td class="hash">' + hash + '</td></tr>';
+  }).join('');
+  tbody.innerHTML = rows;
+}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+el('clear').onclick = () => { items.clear(); render(); };
+
+el('export').onclick = () => {
+  const rows = [['status','name','size_bytes','infohash']];
+  for (const [h, v] of items) rows.push([v.status, v.name, v.size, h]);
+  const csv = rows.map(r => r.map(x => '"' + String(x).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const url = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'torbox-cached.csv'; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+el('check').onclick = async () => {
+  const key = keyInput.value.trim();
+  if (!key) { el('err').textContent = 'API key required.'; return; }
+  el('err').textContent = '';
+  el('check').disabled = true;
+
+  const hashes = [...items.keys()];
+  for (const h of hashes) items.get(h).status = 'checking';
+  render();
+
+  const CHUNK = 80;
+  for (let i = 0; i < hashes.length; i += CHUNK) {
+    const chunk = hashes.slice(i, i + CHUNK);
+    const qs = chunk.map(h => 'hash=' + encodeURIComponent(h)).join('&') + '&format=object&list_files=false';
+    const base = (proxyInput.value.trim() || 'https://api.torbox.app').replace(/\/$/, '');
+    const url = base + '/v1/api/torrents/checkcached?' + qs;
+    try {
+      const r = await fetch(url, { headers: { Authorization: 'Bearer ' + key } });
+      const j = await r.json();
+      if (!j.success) throw new Error(j.detail || j.error || 'API error');
+      const data = j.data || {};
+      const foundKeys = new Set(Object.keys(data).map(k => k.toLowerCase()));
+      for (const h of chunk) {
+        items.get(h).status = foundKeys.has(h.toLowerCase()) ? 'cached' : 'uncached';
+      }
+    } catch (e) {
+      for (const h of chunk) items.get(h).status = 'error';
+      el('err').textContent = 'Request failed: ' + e.message;
+    }
+    render();
+  }
+  el('check').disabled = false;
+};
+</script>
+</body>
+</html>
