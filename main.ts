@@ -63,7 +63,10 @@ async function sha1(bytes: Uint8Array): Promise<string> {
   return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+const hashCache = new Map<string, string>(); // downloadUrl -> hash
 async function hashFromDownloadUrl(downloadUrl: string): Promise<string | null> {
+  const cached = hashCache.get(downloadUrl);
+  if (cached) return cached;
   const r = await fetch(downloadUrl, { redirect: "follow" });
   if (!r.ok) return null;
   const buf = new Uint8Array(await r.arrayBuffer());
@@ -99,7 +102,9 @@ async function hashFromDownloadUrl(downloadUrl: string): Promise<string | null> 
   };
   try { parse(); } catch { return null; }
   if (infoStart < 0) return null;
-  return await sha1(buf.subarray(infoStart, infoEnd));
+  const h = await sha1(buf.subarray(infoStart, infoEnd));
+  hashCache.set(downloadUrl, h);
+  return h;
 }
 
 async function resolveImdb(id: string) {

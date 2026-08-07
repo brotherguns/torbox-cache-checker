@@ -488,7 +488,7 @@ el('run-search').addEventListener('click', async () => {
     })
     .filter(x => x.hash || x.downloadUrl || x.magnetUrl)
     .sort((a, b) => b.seeders - a.seeders)
-    .slice(0, 60);
+    .slice(0, 25);
 
     if (!withHash.length) {
       searchList.innerHTML = '<li class="empty">No usable results.</li>'; return;
