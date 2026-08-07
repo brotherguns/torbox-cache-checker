@@ -128,6 +128,12 @@
     font: 500 14px var(--sans); color: var(--ink-soft); cursor: pointer; min-height: 40px; }
   .tab.active { background: var(--panel); color: var(--ink); box-shadow: var(--shadow); }
 
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { background: var(--panel-2); color: var(--ink-soft); border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: 999px; font: 500 12px var(--sans); cursor: pointer;
+    min-height: 32px; }
+  .chip.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
   .item .add { grid-row: 1 / 3; grid-column: 3; }
   .item.result { grid-template-columns: 1fr auto auto; }
   .item .btn { padding: 8px 12px; min-height: 36px; font-size: 13px; }
@@ -182,8 +188,18 @@
 
   <div class="card tabpanel" id="tab-search">
     <h2>Search Prowlarr</h2>
-    <div class="row split">
-      <input id="q" type="text" placeholder="Title or IMDb ID (tt1234567)"
+    <div class="chips" id="cats">
+      <button class="chip active" data-cat="auto" type="button">Auto</button>
+      <button class="chip" data-cat="movie" type="button">Movies</button>
+      <button class="chip" data-cat="tv" type="button">TV</button>
+      <button class="chip" data-cat="anime" type="button">Anime</button>
+      <button class="chip" data-cat="games" type="button">Games</button>
+      <button class="chip" data-cat="music" type="button">Music</button>
+      <button class="chip" data-cat="books" type="button">Books</button>
+      <button class="chip" data-cat="all" type="button">All</button>
+    </div>
+    <div class="row split" style="margin-top:10px">
+      <input id="q" type="text" placeholder="Title, IMDb ID (tt…) — Auto guesses category"
         autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
       <button class="btn primary" id="run-search" type="button">Search</button>
     </div>
@@ -424,6 +440,29 @@ document.querySelectorAll('.tab').forEach(t => {
 const qInput = el('q'), searchErr = el('search-err'), searchList = el('search-results');
 qInput.addEventListener('keydown', e => { if (e.key === 'Enter') el('run-search').click(); });
 
+// Category chips
+let currentCat = 'auto';
+document.querySelectorAll('#cats .chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('#cats .chip').forEach(x => x.classList.toggle('active', x === c));
+    currentCat = c.dataset.cat;
+  });
+});
+
+// Prowlarr Torznab categories
+const CATS = {
+  movie:  [2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060, 2080],
+  tv:     [5000, 5010, 5020, 5030, 5040, 5045, 5050, 5060, 5080],
+  anime:  [5070, 2070], // TV anime + Movie anime
+  games:  [1000, 1010, 1020, 1030, 1040, 1050, 1060, 1070, 1080,
+           4000, 4010, 4020, 4030, 4040, 4050, 4060, 4070],
+  music:  [3000, 3010, 3020, 3030, 3040, 3050, 3060],
+  books:  [7000, 7010, 7020, 7030],
+  all:    [],
+};
+const TYPE_FOR_CAT = { movie: 'movie', tv: 'tvsearch', anime: 'tvsearch',
+  games: 'search', music: 'music', books: 'book', all: 'search' };
+
 el('run-search').addEventListener('click', async () => {
   const q = qInput.value.trim();
   if (!q) return;
@@ -434,39 +473,52 @@ el('run-search').addEventListener('click', async () => {
   el('run-search').disabled = true;
 
   try {
-    // Prowlarr categories: 2000-2999 = Movies, 5000-5999 = TV
-    const CAT_MOVIE = [2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060, 2070, 2080];
-    const CAT_TV = [5000, 5010, 5020, 5030, 5040, 5045, 5050, 5060, 5070, 5080];
     const catQS = (cats) => cats.map(c => 'categories=' + c).join('&');
     const imdbMatch = q.match(/^tt(\d{6,10})$/i);
-    const urls = [];
     let resolvedTitle = null;
-    let kind = null;
     let titleForFilter = q.toLowerCase();
-    if (imdbMatch) {
-      const id = 'tt' + imdbMatch[1];
+    let effectiveCat = currentCat;
+
+    // If Auto + IMDb ID, resolve to figure out movie vs tv
+    if (currentCat === 'auto' && imdbMatch) {
       try {
-        const rr = await fetch('/resolve-imdb/' + id);
+        const rr = await fetch('/resolve-imdb/tt' + imdbMatch[1]);
         if (rr.ok) {
           const info = await rr.json();
           if (info.title) {
             resolvedTitle = info.title + (info.year ? ' (' + info.year + ')' : '');
             titleForFilter = info.title.toLowerCase();
-            kind = info.kind; // "tv" or "movie"
+            effectiveCat = info.kind === 'tv' ? 'tv' : 'movie';
           }
         }
       } catch {}
-      const cats = kind === 'tv' ? CAT_TV : kind === 'movie' ? CAT_MOVIE : [...CAT_TV, ...CAT_MOVIE];
-      // Title search restricted to the right categories (imdbId is unreliable on private trackers)
-      if (resolvedTitle) {
-        const type = kind === 'movie' ? 'movie' : kind === 'tv' ? 'tvsearch' : 'search';
-        urls.push('/prowlarr/api/v1/search?type=' + type + '&query=' + encodeURIComponent(titleForFilter) + '&' + catQS(cats));
-      }
-    } else {
-      urls.push('/prowlarr/api/v1/search?type=search&query=' + encodeURIComponent(q));
+    } else if (currentCat === 'auto') {
+      // Plain text with Auto: search all
+      effectiveCat = 'all';
+    } else if (imdbMatch) {
+      // Explicit category but IMDb ID — still resolve to get the title
+      try {
+        const rr = await fetch('/resolve-imdb/tt' + imdbMatch[1]);
+        if (rr.ok) {
+          const info = await rr.json();
+          if (info.title) {
+            resolvedTitle = info.title + (info.year ? ' (' + info.year + ')' : '');
+            titleForFilter = info.title.toLowerCase();
+          }
+        }
+      } catch {}
     }
+
+    const cats = CATS[effectiveCat] || [];
+    const type = TYPE_FOR_CAT[effectiveCat] || 'search';
+    const queryTerm = resolvedTitle ? titleForFilter : q;
+    const qs = 'type=' + type + '&query=' + encodeURIComponent(queryTerm)
+      + (cats.length ? '&' + catQS(cats) : '');
+    const urls = ['/prowlarr/api/v1/search?' + qs];
+
     if (resolvedTitle) {
-      searchList.innerHTML = '<li class="empty">Searching “' + escapeHtml(resolvedTitle) + '”…</li>';
+      searchList.innerHTML = '<li class="empty">Searching “' + escapeHtml(resolvedTitle) +
+        '” in ' + effectiveCat + '…</li>';
     }
     const responses = await Promise.all(urls.map(u => fetch(u)));
     for (const r of responses) {
@@ -480,11 +532,22 @@ el('run-search').addEventListener('click', async () => {
       if (seen.has(key)) return false;
       seen.add(key); return true;
     });
-    // Title-match filter: normalize (strip punctuation, collapse spaces) and require substring
+    // Title-match filter: strict substring for movies/tv (they get category-noise),
+    // loose token-overlap for games/music/etc (titles vary a lot).
     const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     const needle = norm(titleForFilter);
     if (needle) {
-      results = results.filter(x => norm(x.title).includes(needle));
+      if (effectiveCat === 'movie' || effectiveCat === 'tv') {
+        results = results.filter(x => norm(x.title).includes(needle));
+      } else {
+        // At least half the query tokens (>=3 chars) must appear in the title
+        const tokens = needle.split(' ').filter(t => t.length >= 3);
+        const need = Math.max(1, Math.ceil(tokens.length / 2));
+        results = results.filter(x => {
+          const t = norm(x.title);
+          return tokens.filter(tok => t.includes(tok)).length >= need;
+        });
+      }
     }
     if (!Array.isArray(results) || !results.length) {
       searchList.innerHTML = '<li class="empty">No results.</li>'; return;
