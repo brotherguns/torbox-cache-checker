@@ -2,121 +2,177 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#f6f4ef" media="(prefers-color-scheme: light)" />
 <title>TorBox Bulk Cache Checker</title>
 <style>
   :root {
-    --bg: #f6f4ef; --panel: #ffffff; --ink: #1a1815; --ink-soft: #5a544b;
-    --line: #e6e1d6; --accent: #b8541a; --accent-soft: #f2e2d0;
-    --ok: #2f6b3a; --ok-soft: #e0eede; --no: #a02929; --no-soft: #f2dcdc;
+    --bg: #f6f4ef; --panel: #ffffff; --panel-2: #faf8f2;
+    --ink: #1a1815; --ink-soft: #5a544b; --ink-faint: #8a8377;
+    --line: #e6e1d6; --line-strong: #d4ccbb;
+    --accent: #b8541a; --accent-soft: #f2e2d0; --accent-ink: #ffffff;
+    --ok: #2f6b3a; --ok-soft: #e0eede;
+    --no: #a02929; --no-soft: #f2dcdc;
     --warn: #8a6d1a; --warn-soft: #f2ead0;
     --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-    --sans: system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+    --sans: -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Inter, sans-serif;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+    --safe-b: env(safe-area-inset-bottom, 0px);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #14130f; --panel: #1c1a16; --ink: #ece7dc; --ink-soft: #97907f;
-      --line: #2a2721; --accent: #e08a4a; --accent-soft: #3a2618;
-      --ok: #7bc088; --ok-soft: #1c2a1e; --no: #e07070; --no-soft: #2a1818;
+      --bg: #14130f; --panel: #1c1a16; --panel-2: #201d18;
+      --ink: #ece7dc; --ink-soft: #97907f; --ink-faint: #6a6357;
+      --line: #2a2721; --line-strong: #3a362e;
+      --accent: #e08a4a; --accent-soft: #3a2618; --accent-ink: #14130f;
+      --ok: #7bc088; --ok-soft: #1c2a1e;
+      --no: #e07070; --no-soft: #2a1818;
       --warn: #d9b95a; --warn-soft: #2a2418;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
     }
   }
-  * { box-sizing: border-box; }
-  body { background: var(--bg); color: var(--ink); font-family: var(--sans);
-    margin: 0; padding: 32px 24px 80px; -webkit-font-smoothing: antialiased; }
-  .wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
-  header { display: flex; flex-direction: column; gap: 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
-  header .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--accent); }
-  header h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
-  header p { margin: 0; color: var(--ink-soft); font-size: 14px; max-width: 62ch; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
-  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-  label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--ink-soft); display: block; margin-bottom: 6px; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { overflow-x: hidden; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    margin: 0; padding: 20px 16px calc(120px + var(--safe-b));
+    -webkit-font-smoothing: antialiased; font-size: 15px; line-height: 1.5;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+  header { padding-bottom: 4px; }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 4px; }
+  h1 { margin: 0 0 6px; font-size: 24px; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+  h1 + p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px; box-shadow: var(--shadow); }
+  .card h2 { margin: 0 0 12px; font-size: 12px; font-family: var(--mono); letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
+
+  label.field { display: block; margin: 0 0 6px; font-family: var(--mono); font-size: 11px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
   input[type="password"], input[type="text"] {
     background: var(--bg); color: var(--ink); border: 1px solid var(--line);
-    border-radius: 6px; padding: 10px 12px; font-family: var(--mono); font-size: 13px;
-    width: 100%;
+    border-radius: 10px; padding: 12px 14px; font-family: var(--mono); font-size: 14px;
+    width: 100%; min-height: 46px; -webkit-appearance: none;
   }
   input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-  button { background: var(--ink); color: var(--bg); border: 0; padding: 10px 16px;
-    border-radius: 6px; font: inherit; font-weight: 500; cursor: pointer; }
-  button.primary { background: var(--accent); color: #fff; }
-  button:disabled { opacity: 0.5; cursor: not-allowed; }
-  button.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-  .drop { border: 1.5px dashed var(--line); border-radius: 10px; padding: 36px 20px;
-    text-align: center; color: var(--ink-soft); cursor: pointer; transition: 0.15s; }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--ink); color: var(--bg); border: 0; padding: 12px 18px;
+    border-radius: 10px; font: 500 15px/1 var(--sans); cursor: pointer; min-height: 46px;
+    touch-action: manipulation; user-select: none; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line-strong); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.block { width: 100%; }
+
+  .drop { position: relative; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 8px; text-align: center; padding: 28px 16px; min-height: 130px;
+    border: 1.5px dashed var(--line-strong); border-radius: var(--radius);
+    background: var(--panel-2); color: var(--ink-soft); cursor: pointer; }
   .drop.hover { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
-  .drop strong { color: var(--ink); font-weight: 600; }
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-  .stat { padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+  .drop .big { font-size: 16px; font-weight: 600; color: var(--ink); }
+  .drop .small { font-size: 13px; }
+  .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .stat { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+    text-align: center; }
   .stat .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
     text-transform: uppercase; color: var(--ink-soft); }
-  .stat .v { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; }
+  .stat .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .stat.ok .v { color: var(--ok); } .stat.no .v { color: var(--no); }
   .stat.pending .v { color: var(--warn); }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
-  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); }
-  th { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--ink-soft); font-weight: 500;
-    background: var(--panel); position: sticky; top: 0; }
-  tr:last-child td { border-bottom: 0; }
-  td.name { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  td.hash { font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
-  td.size { font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+
+  ul.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .item { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 14px;
+    border-bottom: 1px solid var(--line); align-items: center; }
+  .item:last-child { border-bottom: 0; }
+  .item .name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; min-width: 0; }
+  .item .meta { grid-column: 1 / 2; font-family: var(--mono); font-size: 11px;
+    color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .status { grid-row: 1 / 3; grid-column: 2; }
+  .empty { padding: 28px 16px; text-align: center; color: var(--ink-faint); font-size: 14px; }
+
   .pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono);
-    font-size: 11px; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
+    font-size: 11px; letter-spacing: 0.04em; padding: 4px 9px; border-radius: 999px;
+    font-weight: 500; white-space: nowrap; }
   .pill.ok { background: var(--ok-soft); color: var(--ok); }
   .pill.no { background: var(--no-soft); color: var(--no); }
   .pill.pending { background: var(--warn-soft); color: var(--warn); }
   .pill.err { background: var(--no-soft); color: var(--no); }
-  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .toolbar .grow { flex: 1; }
+  .pill.idle { background: var(--panel-2); color: var(--ink-soft); border: 1px solid var(--line); }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .row.split > *:first-child { flex: 1; min-width: 0; }
   .muted { color: var(--ink-soft); font-size: 12px; }
-  .err { color: var(--no); font-size: 13px; }
-  footer { color: var(--ink-soft); font-size: 12px; text-align: center; padding-top: 12px; }
-  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .err-banner { padding: 10px 12px; border-radius: 8px; background: var(--no-soft); color: var(--no);
+    font-size: 13px; }
+  details.advanced { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+  details.advanced summary { cursor: pointer; font-size: 12px; font-family: var(--mono);
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); list-style: none; }
+  details.advanced summary::-webkit-details-marker { display: none; }
+  details.advanced summary::after { content: " +"; }
+  details.advanced[open] summary::after { content: " –"; }
+  details.advanced .body { padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+
+  .actionbar { position: fixed; left: 0; right: 0; bottom: 0;
+    padding: 12px 16px calc(12px + var(--safe-b));
+    background: color-mix(in oklab, var(--bg) 92%, transparent);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line); display: flex; gap: 8px; z-index: 10;
+  }
+  .actionbar .btn { flex: 1; }
+
+  @media (min-width: 720px) {
+    body { padding: 32px 24px 40px; }
+    h1 { font-size: 30px; }
+    .actionbar { position: static; padding: 0; background: none; border: 0; backdrop-filter: none; }
+    .actionbar .btn { flex: 0 0 auto; }
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <span class="eyebrow">TorBox · Bulk Cache Check</span>
-    <h1>Drop torrent files. See what's cached.</h1>
-    <p>Parses each <code>.torrent</code> in your browser to compute its infohash, then batches
-      them against TorBox's <code>/torrents/checkcached</code>. Your API key never leaves this page.</p>
+    <h1>Drop torrents, see what's cached.</h1>
+    <p>Everything runs in your browser. Your API key stays local.</p>
   </header>
 
   <div class="card">
-    <label for="key">API Key</label>
-    <div class="row">
-      <input id="key" type="password" placeholder="Paste your TorBox API token" autocomplete="off" />
-      <button class="ghost" id="save">Remember locally</button>
+    <h2>Setup</h2>
+    <label class="field" for="key">TorBox API Key</label>
+    <div class="row split">
+      <input id="key" type="password" placeholder="Paste your TorBox API token"
+        autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
+      <button class="btn ghost" id="save" type="button">Save</button>
     </div>
-    <div class="muted" style="margin-top:8px">Stored only in your browser's localStorage if you click Remember.</div>
-    <div style="margin-top:14px">
-      <label for="proxy">API Base (optional proxy)</label>
-      <input id="proxy" type="text" placeholder="Leave blank when running on Deno Deploy (server proxies same-origin)" />
-      <div class="muted" style="margin-top:6px">Deployed with the included <code>main.ts</code> Deno server, this can stay blank —
-        the server proxies TorBox from the same origin, so no CORS. Only fill this if hosting the HTML alone.</div>
-    </div>
+    <details class="advanced">
+      <summary>Advanced</summary>
+      <div class="body">
+        <label class="field" for="proxy">API Base override</label>
+        <input id="proxy" type="text" placeholder="Leave blank — server proxies same-origin"
+          autocapitalize="off" autocorrect="off" spellcheck="false" />
+        <div class="muted">Set this only if hosting the HTML separately without the Deno server proxy.</div>
+      </div>
+    </details>
   </div>
 
   <div class="card">
-    <label class="drop" id="drop" for="file">
-      <strong>Drop .torrent files here</strong> or tap to select — bulk selection works.
-      <input type="file" id="file" multiple style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none" />
+    <h2>Torrent files</h2>
+    <label class="drop" id="drop">
+      <span class="big">Tap to add .torrent files</span>
+      <span class="small">On iPhone use the Files picker → tap <b>Select</b> to choose multiple.</span>
+      <input type="file" id="file" multiple />
     </label>
-    <div class="toolbar" style="margin-top:14px">
-      <span class="muted grow" id="count">No files loaded.</span>
-      <button class="ghost" id="clear" disabled>Clear</button>
-      <button class="ghost" id="export" disabled>Export CSV</button>
-      <button class="primary" id="check" disabled>Check cached</button>
-    </div>
-    <div class="err" id="err" style="margin-top:8px"></div>
+    <div id="err" class="err-banner" style="margin-top:12px; display:none"></div>
   </div>
 
   <div class="stats">
@@ -126,59 +182,68 @@
     <div class="stat pending"><div class="k">Pending</div><div class="v" id="s-pending">0</div></div>
   </div>
 
-  <div class="tablewrap">
-    <table>
-      <thead><tr>
-        <th style="width:120px">Status</th>
-        <th>Name</th>
-        <th style="width:110px">Size</th>
-        <th style="width:220px">Infohash</th>
-      </tr></thead>
-      <tbody id="tbody">
-        <tr><td colspan="4" class="muted" style="padding:24px; text-align:center">
-          Load some torrent files to begin.</td></tr>
-      </tbody>
-    </table>
+  <div class="card" style="padding:0">
+    <ul class="items" id="items">
+      <li class="empty">No files loaded yet.</li>
+    </ul>
   </div>
 
-  <footer>Requests go from your browser directly to the API base you configure.</footer>
+  <div class="actionbar">
+    <button class="btn ghost" id="clear" disabled type="button">Clear</button>
+    <button class="btn ghost" id="export" disabled type="button">Export CSV</button>
+    <button class="btn primary" id="check" disabled type="button">Check cached</button>
+  </div>
 </div>
 
 <script>
+// ---------- bencode (tolerant: strings return Uint8Array; caller decodes) ----------
 function decodeBencode(buf) {
   const bytes = new Uint8Array(buf);
   let i = 0;
-  const infoRanges = {};
-  function readInt(term) {
-    let n = ''; while (bytes[i] !== term.charCodeAt(0)) { n += String.fromCharCode(bytes[i++]); }
-    i++; return parseInt(n, 10);
+  let infoStart = -1, infoEnd = -1;
+  const td = new TextDecoder('utf-8');
+  const td_latin = new TextDecoder('latin1');
+  function readIntUntil(term) {
+    let s = ''; const t = term.charCodeAt(0);
+    while (bytes[i] !== t) { s += String.fromCharCode(bytes[i++]); }
+    i++; return parseInt(s, 10);
   }
   function decode() {
-    const c = String.fromCharCode(bytes[i]);
-    if (c === 'i') { i++; return readInt('e'); }
-    if (c === 'l') { i++; const a = []; while (String.fromCharCode(bytes[i]) !== 'e') a.push(decode()); i++; return a; }
-    if (c === 'd') {
+    const c = bytes[i];
+    if (c === 0x69) { i++; return readIntUntil('e'); } // 'i'
+    if (c === 0x6c) { // 'l'
+      i++; const a = [];
+      while (bytes[i] !== 0x65) a.push(decode());
+      i++; return a;
+    }
+    if (c === 0x64) { // 'd'
       i++; const o = {};
-      while (String.fromCharCode(bytes[i]) !== 'e') {
-        const k = decode();
-        const key = typeof k === 'string' ? k : new TextDecoder().decode(k);
+      while (bytes[i] !== 0x65) {
+        const kRaw = decode();
+        const key = td.decode(kRaw);
         const startVal = i;
         const v = decode();
-        if (key === 'info') infoRanges.info = [startVal, i];
+        if (key === 'info') { infoStart = startVal; infoEnd = i; }
         o[key] = v;
       }
       i++; return o;
     }
-    if (c >= '0' && c <= '9') {
-      const len = readInt(':');
+    if (c >= 0x30 && c <= 0x39) {
+      const len = readIntUntil(':');
       const slice = bytes.slice(i, i + len); i += len;
-      try { return new TextDecoder('utf-8', {fatal: true}).decode(slice); }
-      catch { return slice; }
+      return slice;
     }
-    throw new Error('bencode parse error at ' + i);
+    throw new Error('bencode error at byte ' + i);
   }
   const root = decode();
-  return { root, infoBytes: infoRanges.info ? bytes.slice(infoRanges.info[0], infoRanges.info[1]) : null };
+  const infoBytes = infoStart >= 0 ? bytes.slice(infoStart, infoEnd) : null;
+  return { root, infoBytes, td, td_latin };
+}
+
+function bytesToStr(u8) {
+  if (!(u8 instanceof Uint8Array)) return String(u8 ?? '');
+  try { return new TextDecoder('utf-8', {fatal: true}).decode(u8); }
+  catch { return new TextDecoder('latin1').decode(u8); }
 }
 
 async function sha1Hex(bytes) {
@@ -193,50 +258,73 @@ function humanBytes(n) {
   return n.toFixed(n >= 10 || i === 0 ? 0 : 1) + ' ' + u[i];
 }
 
-const items = new Map();
+// ---------- state ----------
+const items = new Map(); // hash -> {name, size, status, filename, error?}
+const errFiles = [];     // {filename, error}
+
 const el = id => document.getElementById(id);
-const tbody = el('tbody'), keyInput = el('key');
+const keyInput = el('key'), proxyInput = el('proxy'), errBanner = el('err');
 if (localStorage.torboxKey) keyInput.value = localStorage.torboxKey;
-const proxyInput = el('proxy');
 if (localStorage.torboxProxy) proxyInput.value = localStorage.torboxProxy;
-proxyInput.onchange = () => { localStorage.torboxProxy = proxyInput.value.trim(); };
+proxyInput.addEventListener('change', () => { localStorage.torboxProxy = proxyInput.value.trim(); });
 
-el('save').onclick = () => {
+el('save').addEventListener('click', () => {
   localStorage.torboxKey = keyInput.value.trim();
-  el('save').textContent = 'Saved';
-  setTimeout(() => el('save').textContent = 'Remember locally', 1200);
-};
+  el('save').textContent = 'Saved ✓';
+  setTimeout(() => el('save').textContent = 'Save', 1200);
+});
 
+// ---------- drop / file input ----------
 const drop = el('drop'), fileInput = el('file');
-drop.ondragover = e => { e.preventDefault(); drop.classList.add('hover'); };
-drop.ondragleave = () => drop.classList.remove('hover');
-drop.ondrop = e => { e.preventDefault(); drop.classList.remove('hover'); handleFiles(e.dataTransfer.files); };
-fileInput.onchange = () => { handleFiles(fileInput.files); fileInput.value = ''; };
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('hover'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('hover'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('hover');
+  handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => {
+  const files = Array.from(fileInput.files || []);
+  handleFiles(files);
+  fileInput.value = ''; // let iOS re-pick the same file / add more rounds
+});
 
 async function handleFiles(fileList) {
-  el('err').textContent = '';
-  const errs = [];
-  for (const f of fileList) {
+  const files = Array.from(fileList);
+  if (!files.length) return;
+  errFiles.length = 0;
+  errBanner.style.display = 'none';
+
+  for (const f of files) {
     try {
       const buf = await f.arrayBuffer();
       const { root, infoBytes } = decodeBencode(buf);
-      if (!infoBytes) throw new Error('no info dict');
+      if (!infoBytes) throw new Error('no info dict in torrent');
       const hash = await sha1Hex(infoBytes);
       const info = root.info || {};
       let size = 0;
       if (typeof info.length === 'number') size = info.length;
-      else if (Array.isArray(info.files)) size = info.files.reduce((a,x) => a + (x.length || 0), 0);
-      const name = info.name || f.name.replace(/\.torrent$/i, '');
+      else if (Array.isArray(info.files)) {
+        size = info.files.reduce((a, x) => a + (typeof x.length === 'number' ? x.length : 0), 0);
+      }
+      const name = bytesToStr(info.name) || f.name.replace(/\.torrent$/i, '');
       if (!items.has(hash)) items.set(hash, { name, size, status: 'idle', filename: f.name });
-    } catch (e) { errs.push(f.name + ': ' + e.message); }
+    } catch (e) {
+      errFiles.push({ filename: f.name, error: e.message || String(e) });
+    }
   }
-  if (errs.length) el('err').textContent = errs.join(' · ');
+  if (errFiles.length) {
+    errBanner.style.display = '';
+    errBanner.textContent = errFiles.length + ' file(s) could not be parsed: ' +
+      errFiles.slice(0, 3).map(x => x.filename + ' — ' + x.error).join(' · ') +
+      (errFiles.length > 3 ? ' …' : '');
+  }
   render();
 }
 
+// ---------- render ----------
+const list = el('items');
 function render() {
   const n = items.size;
-  el('count').textContent = n ? n + ' torrent' + (n === 1 ? '' : 's') + ' loaded' : 'No files loaded.';
   el('check').disabled = n === 0;
   el('clear').disabled = n === 0;
   el('export').disabled = n === 0;
@@ -247,32 +335,42 @@ function render() {
     else if (v.status === 'uncached') no++;
     else if (v.status === 'checking' || v.status === 'idle') pend++;
   }
-  el('s-total').textContent = n; el('s-ok').textContent = ok;
-  el('s-no').textContent = no; el('s-pending').textContent = pend;
+  el('s-total').textContent = n;
+  el('s-ok').textContent = ok;
+  el('s-no').textContent = no;
+  el('s-pending').textContent = pend;
 
   if (n === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" class="muted" style="padding:24px; text-align:center">Load some torrent files to begin.</td></tr>';
+    list.innerHTML = '<li class="empty">No files loaded yet.</li>';
     return;
   }
-  const rows = [...items.entries()].map(([hash, v]) => {
+  const html = [...items.entries()].map(([hash, v]) => {
     const pill = {
-      idle:     '<span class="pill pending">pending</span>',
+      idle:     '<span class="pill idle">ready</span>',
       checking: '<span class="pill pending">checking</span>',
       cached:   '<span class="pill ok">cached</span>',
       uncached: '<span class="pill no">uncached</span>',
       error:    '<span class="pill err">error</span>',
-    }[v.status] || v.status;
-    return '<tr><td>' + pill + '</td><td class="name" title="' + escapeHtml(v.name) + '">' +
-      escapeHtml(v.name) + '</td><td class="size">' + humanBytes(v.size) +
-      '</td><td class="hash">' + hash + '</td></tr>';
+    }[v.status];
+    const metaBits = [];
+    if (v.size) metaBits.push(humanBytes(v.size));
+    metaBits.push(hash.slice(0, 12) + '…');
+    return `<li class="item">
+      <div class="name" title="${escapeHtml(v.name)}">${escapeHtml(v.name)}</div>
+      <div class="status">${pill}</div>
+      <div class="meta">${metaBits.join(' · ')}</div>
+    </li>`;
   }).join('');
-  tbody.innerHTML = rows;
+  list.innerHTML = html;
 }
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
-el('clear').onclick = () => { items.clear(); render(); };
+el('clear').addEventListener('click', () => { items.clear(); errFiles.length = 0;
+  errBanner.style.display = 'none'; render(); });
 
-el('export').onclick = () => {
+el('export').addEventListener('click', () => {
   const rows = [['status','name','size_bytes','infohash']];
   for (const [h, v] of items) rows.push([v.status, v.name, v.size, h]);
   const csv = rows.map(r => r.map(x => '"' + String(x).replace(/"/g,'""') + '"').join(',')).join('\n');
@@ -280,19 +378,20 @@ el('export').onclick = () => {
   const a = document.createElement('a');
   a.href = url; a.download = 'torbox-cached.csv'; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
+});
 
-el('check').onclick = async () => {
+// ---------- checker ----------
+el('check').addEventListener('click', async () => {
   const key = keyInput.value.trim();
-  if (!key) { el('err').textContent = 'API key required.'; return; }
-  el('err').textContent = '';
+  if (!key) { errBanner.style.display = ''; errBanner.textContent = 'API key required.'; return; }
+  errBanner.style.display = 'none';
   el('check').disabled = true;
 
   const hashes = [...items.keys()];
   for (const h of hashes) items.get(h).status = 'checking';
   render();
 
-  const CHUNK = 80;
+  const CHUNK = 50;
   for (let i = 0; i < hashes.length; i += CHUNK) {
     const chunk = hashes.slice(i, i + CHUNK);
     const qs = chunk.map(h => 'hash=' + encodeURIComponent(h)).join('&') + '&format=object&list_files=false';
@@ -300,21 +399,21 @@ el('check').onclick = async () => {
     const url = base + '/v1/api/torrents/checkcached?' + qs;
     try {
       const r = await fetch(url, { headers: { Authorization: 'Bearer ' + key } });
-      const j = await r.json();
-      if (!j.success) throw new Error(j.detail || j.error || 'API error');
+      const text = await r.text();
+      let j; try { j = JSON.parse(text); } catch { throw new Error('bad JSON: ' + text.slice(0, 120)); }
+      if (!j.success) throw new Error(j.detail || j.error || ('HTTP ' + r.status));
       const data = j.data || {};
-      const foundKeys = new Set(Object.keys(data).map(k => k.toLowerCase()));
-      for (const h of chunk) {
-        items.get(h).status = foundKeys.has(h.toLowerCase()) ? 'cached' : 'uncached';
-      }
+      const found = new Set(Object.keys(data).map(k => k.toLowerCase()));
+      for (const h of chunk) items.get(h).status = found.has(h.toLowerCase()) ? 'cached' : 'uncached';
     } catch (e) {
       for (const h of chunk) items.get(h).status = 'error';
-      el('err').textContent = 'Request failed: ' + e.message;
+      errBanner.style.display = '';
+      errBanner.textContent = 'Request failed: ' + (e.message || e);
     }
     render();
   }
   el('check').disabled = false;
-};
+});
 </script>
 </body>
 </html>
