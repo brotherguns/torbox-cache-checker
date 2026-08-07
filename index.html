@@ -434,25 +434,40 @@ el('run-search').addEventListener('click', async () => {
   el('run-search').disabled = true;
 
   try {
+    // Prowlarr categories: 2000-2999 = Movies, 5000-5999 = TV
+    const CAT_MOVIE = [2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060, 2070, 2080];
+    const CAT_TV = [5000, 5010, 5020, 5030, 5040, 5045, 5050, 5060, 5070, 5080];
+    const catQS = (cats) => cats.map(c => 'categories=' + c).join('&');
     const imdbMatch = q.match(/^tt(\d{6,10})$/i);
     const urls = [];
     let resolvedTitle = null;
+    let kind = null;
+    let titleForFilter = q.toLowerCase();
     if (imdbMatch) {
       const id = 'tt' + imdbMatch[1];
-      // Try IMDb-ID search on both endpoints
-      urls.push('/prowlarr/api/v1/search?type=movie&imdbId=' + id);
-      urls.push('/prowlarr/api/v1/search?type=tvsearch&imdbId=' + imdbMatch[1]);
-      // AND resolve to a title for a plain text search (private trackers rarely index by IMDb)
       try {
         const rr = await fetch('/resolve-imdb/' + id);
         if (rr.ok) {
           const info = await rr.json();
           if (info.title) {
             resolvedTitle = info.title + (info.year ? ' (' + info.year + ')' : '');
-            urls.push('/prowlarr/api/v1/search?type=search&query=' + encodeURIComponent(info.title));
+            titleForFilter = info.title.toLowerCase();
+            kind = info.kind; // "tv" or "movie"
           }
         }
       } catch {}
+      const cats = kind === 'tv' ? CAT_TV : kind === 'movie' ? CAT_MOVIE : [...CAT_TV, ...CAT_MOVIE];
+      // IMDb-ID search on the relevant endpoint
+      if (kind === 'tv') {
+        urls.push('/prowlarr/api/v1/search?type=tvsearch&imdbId=' + imdbMatch[1] + '&' + catQS(CAT_TV));
+      } else if (kind === 'movie') {
+        urls.push('/prowlarr/api/v1/search?type=movie&imdbId=' + id + '&' + catQS(CAT_MOVIE));
+      }
+      // Title search restricted to relevant categories
+      if (resolvedTitle) {
+        const titleQuery = encodeURIComponent(imdbMatch ? titleForFilter : q);
+        urls.push('/prowlarr/api/v1/search?type=search&query=' + titleQuery + '&' + catQS(cats));
+      }
     } else {
       urls.push('/prowlarr/api/v1/search?type=search&query=' + encodeURIComponent(q));
     }
@@ -466,11 +481,17 @@ el('run-search').addEventListener('click', async () => {
     const raw = (await Promise.all(responses.map(r => r.json()))).flat();
     // Dedupe by guid + infoHash
     const seen = new Set();
-    const results = raw.filter(x => {
+    let results = raw.filter(x => {
       const key = (x.infoHash || '') + '|' + (x.guid || x.title);
       if (seen.has(key)) return false;
       seen.add(key); return true;
     });
+    // Title-match filter: normalize (strip punctuation, collapse spaces) and require substring
+    const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const needle = norm(titleForFilter);
+    if (needle) {
+      results = results.filter(x => norm(x.title).includes(needle));
+    }
     if (!Array.isArray(results) || !results.length) {
       searchList.innerHTML = '<li class="empty">No results.</li>'; return;
     }
