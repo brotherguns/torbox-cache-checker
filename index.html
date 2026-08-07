@@ -183,7 +183,7 @@
   <div class="card tabpanel" id="tab-search">
     <h2>Search Prowlarr</h2>
     <div class="row split">
-      <input id="q" type="text" placeholder="Movie or show title…"
+      <input id="q" type="text" placeholder="Title or IMDb ID (tt1234567)"
         autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" />
       <button class="btn primary" id="run-search" type="button">Search</button>
     </div>
@@ -434,9 +434,23 @@ el('run-search').addEventListener('click', async () => {
   el('run-search').disabled = true;
 
   try {
-    const r = await fetch('/prowlarr/api/v1/search?type=search&query=' + encodeURIComponent(q));
-    if (!r.ok) throw new Error('Prowlarr ' + r.status + (r.status === 500 ? ' — is PROWLARR_API_KEY set?' : ''));
-    const results = await r.json();
+    const imdbMatch = q.match(/^tt(\d{6,10})$/i);
+    let urls;
+    if (imdbMatch) {
+      // Query movie + tv IMDb search in parallel; concat results
+      const id = imdbMatch[1];
+      urls = [
+        '/prowlarr/api/v1/search?type=movie&imdbId=tt' + id,
+        '/prowlarr/api/v1/search?type=tvsearch&imdbId=' + id,
+      ];
+    } else {
+      urls = ['/prowlarr/api/v1/search?type=search&query=' + encodeURIComponent(q)];
+    }
+    const responses = await Promise.all(urls.map(u => fetch(u)));
+    for (const r of responses) {
+      if (!r.ok) throw new Error('Prowlarr ' + r.status + (r.status === 500 ? ' — is PROWLARR_API_KEY set?' : ''));
+    }
+    const results = (await Promise.all(responses.map(r => r.json()))).flat();
     if (!Array.isArray(results) || !results.length) {
       searchList.innerHTML = '<li class="empty">No results.</li>'; return;
     }
