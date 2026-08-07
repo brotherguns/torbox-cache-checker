@@ -1,0 +1,32 @@
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+    volumes:
+      - ./data/prowlarr:/config
+    ports:
+      - "9696:9696"
+    restart: unless-stopped
+
+  checker:
+    image: denoland/deno:2.1.4
+    container_name: torbox-checker
+    working_dir: /app
+    command: ["deno", "run", "--allow-net", "--allow-read", "--allow-env", "main.ts"]
+    environment:
+      - PORT=8000
+      # After Prowlarr is set up, put the API key here (Prowlarr → Settings → General → API Key)
+      - PROWLARR_URL=http://prowlarr:9696
+      - PROWLARR_API_KEY=${PROWLARR_API_KEY:-}
+    volumes:
+      - ./main.ts:/app/main.ts:ro
+      - ./index.html:/app/index.html:ro
+    ports:
+      - "3000:8000"
+    depends_on:
+      - prowlarr
+    restart: unless-stopped
