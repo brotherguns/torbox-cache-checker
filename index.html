@@ -33,70 +33,112 @@
       --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
     }
   }
+  :root[data-theme="dark"] {
+    --bg: #14130f; --panel: #1c1a16; --panel-2: #201d18;
+    --ink: #ece7dc; --ink-soft: #97907f; --ink-faint: #6a6357;
+    --line: #2a2721; --line-strong: #3a362e;
+    --accent: #e08a4a; --accent-soft: #3a2618; --accent-ink: #14130f;
+    --ok: #7bc088; --ok-soft: #1c2a1e;
+    --no: #e07070; --no-soft: #2a1818;
+    --warn: #d9b95a; --warn-soft: #2a2418;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.2);
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f4ef; --panel: #ffffff; --panel-2: #faf8f2;
+    --ink: #1a1815; --ink-soft: #5a544b; --ink-faint: #8a8377;
+    --line: #e6e1d6; --line-strong: #d4ccbb;
+    --accent: #b8541a; --accent-soft: #f2e2d0; --accent-ink: #ffffff;
+    --ok: #2f6b3a; --ok-soft: #e0eede;
+    --no: #a02929; --no-soft: #f2dcdc;
+    --warn: #8a6d1a; --warn-soft: #f2ead0;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+  }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { overflow-x: hidden; }
   body {
     background: var(--bg); color: var(--ink); font-family: var(--sans);
-    margin: 0; padding: 20px 16px calc(120px + var(--safe-b));
+    margin: 0; padding: 20px 16px calc(130px + var(--safe-b));
     -webkit-font-smoothing: antialiased; font-size: 15px; line-height: 1.5;
   }
-  .wrap { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
-  header { padding-bottom: 4px; }
+  .wrap { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 2px; }
+  header .titlebox { flex: 1; min-width: 0; }
   .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em;
     text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 4px; }
-  h1 { margin: 0 0 6px; font-size: 24px; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
-  h1 + p { margin: 0; color: var(--ink-soft); font-size: 14px; }
+  h1 { margin: 0 0 4px; font-size: 24px; font-weight: 600; letter-spacing: -0.01em; text-wrap: balance; }
+  header p { margin: 0; color: var(--ink-soft); font-size: 13px; }
+  .icon-btn { background: transparent; border: 1px solid var(--line); border-radius: 10px;
+    width: 40px; height: 40px; cursor: pointer; color: var(--ink-soft); font-size: 16px;
+    display: inline-flex; align-items: center; justify-content: center; padding: 0; }
+  .icon-btn:hover { color: var(--ink); border-color: var(--line-strong); }
 
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
     padding: 16px; box-shadow: var(--shadow); }
   .card h2 { margin: 0 0 12px; font-size: 12px; font-family: var(--mono); letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
+    text-transform: uppercase; color: var(--ink-soft); font-weight: 500;
+    display: flex; align-items: center; justify-content: space-between; }
+  .card h2 .subtle { color: var(--ink-faint); font-family: var(--sans); text-transform: none;
+    letter-spacing: 0; font-weight: 400; font-size: 12px; }
 
   label.field { display: block; margin: 0 0 6px; font-family: var(--mono); font-size: 11px;
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); }
-  input[type="password"], input[type="text"] {
+  input[type="password"], input[type="text"], textarea {
     background: var(--bg); color: var(--ink); border: 1px solid var(--line);
     border-radius: 10px; padding: 12px 14px; font-family: var(--mono); font-size: 14px;
-    width: 100%; min-height: 46px; -webkit-appearance: none;
+    width: 100%; min-height: 46px; -webkit-appearance: none; font: 14px/1.4 var(--mono);
   }
-  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  textarea { min-height: 90px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     background: var(--ink); color: var(--bg); border: 0; padding: 12px 18px;
     border-radius: 10px; font: 500 15px/1 var(--sans); cursor: pointer; min-height: 46px;
-    touch-action: manipulation; user-select: none; }
+    touch-action: manipulation; user-select: none; white-space: nowrap; }
   .btn.primary { background: var(--accent); color: var(--accent-ink); }
   .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line-strong); }
+  .btn.danger { background: transparent; color: var(--no); border: 1px solid var(--no); }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .btn.block { width: 100%; }
+  .btn.sm { padding: 8px 12px; min-height: 36px; font-size: 13px; }
 
   .drop { position: relative; display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 8px; text-align: center; padding: 28px 16px; min-height: 130px;
+    justify-content: center; gap: 6px; text-align: center; padding: 24px 16px; min-height: 110px;
     border: 1.5px dashed var(--line-strong); border-radius: var(--radius);
     background: var(--panel-2); color: var(--ink-soft); cursor: pointer; }
   .drop.hover { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
-  .drop .big { font-size: 16px; font-weight: 600; color: var(--ink); }
-  .drop .small { font-size: 13px; }
+  .drop .big { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .drop .small { font-size: 12px; }
   .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
   .stat { padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
-    text-align: center; }
+    text-align: center; transition: transform 0.15s; }
+  .stat.filter { cursor: pointer; user-select: none; }
+  .stat.filter.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
   .stat .k { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
     text-transform: uppercase; color: var(--ink-soft); }
   .stat .v { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
   .stat.ok .v { color: var(--ok); } .stat.no .v { color: var(--no); }
   .stat.pending .v { color: var(--warn); }
 
-  ul.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .listcard { padding: 0; overflow: hidden; }
+  .listhead { display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    border-bottom: 1px solid var(--line); background: var(--panel-2); flex-wrap: wrap; }
+  .listhead .grow { flex: 1; min-width: 140px; }
+  .listhead input[type="text"] { min-height: 36px; padding: 8px 12px; font-size: 13px; }
+  select { background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 8px; padding: 8px 10px; font: 13px var(--sans); min-height: 36px;
+    -webkit-appearance: none; appearance: none; }
+
+  ul.items { list-style: none; margin: 0; padding: 0; }
   .item { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 12px 14px;
-    border-bottom: 1px solid var(--line); align-items: center; }
+    border-bottom: 1px solid var(--line); align-items: center; position: relative; }
   .item:last-child { border-bottom: 0; }
   .item .name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis;
     white-space: nowrap; min-width: 0; }
   .item .meta { grid-column: 1 / 2; font-family: var(--mono); font-size: 11px;
     color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .item .status { grid-row: 1 / 3; grid-column: 2; }
+  .item .actions { grid-row: 1 / 3; grid-column: 2; display: flex; gap: 6px; align-items: center; }
   .empty { padding: 28px 16px; text-align: center; color: var(--ink-faint); font-size: 14px; }
 
   .pill { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono);
@@ -108,12 +150,20 @@
   .pill.err { background: var(--no-soft); color: var(--no); }
   .pill.idle { background: var(--panel-2); color: var(--ink-soft); border: 1px solid var(--line); }
   .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: 0 0 auto; }
+  .pill.pending::before { animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
 
   .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
   .row.split > *:first-child { flex: 1; min-width: 0; }
   .muted { color: var(--ink-soft); font-size: 12px; }
   .err-banner { padding: 10px 12px; border-radius: 8px; background: var(--no-soft); color: var(--no);
     font-size: 13px; }
+  .toast { position: fixed; left: 50%; bottom: calc(90px + var(--safe-b)); transform: translateX(-50%);
+    background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px;
+    font-size: 13px; box-shadow: var(--shadow); z-index: 20; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s; }
+  .toast.show { opacity: 1; }
+
   details.advanced { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
   details.advanced summary { cursor: pointer; font-size: 12px; font-family: var(--mono);
     letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); list-style: none; }
@@ -122,7 +172,6 @@
   details.advanced[open] summary::after { content: " –"; }
   details.advanced .body { padding-top: 12px; display: flex; flex-direction: column; gap: 10px; }
 
-
   .actionbar { position: fixed; left: 0; right: 0; bottom: 0;
     padding: 12px 16px calc(12px + var(--safe-b));
     background: color-mix(in oklab, var(--bg) 92%, transparent);
@@ -130,26 +179,34 @@
     border-top: 1px solid var(--line); display: flex; gap: 8px; z-index: 10;
   }
   .actionbar .btn { flex: 1; }
+  .actionbar .grow { flex: 2; }
 
   @media (min-width: 720px) {
     body { padding: 32px 24px 40px; }
-    h1 { font-size: 30px; }
+    h1 { font-size: 28px; }
     .actionbar { position: static; padding: 0; background: none; border: 0; backdrop-filter: none; }
     .actionbar .btn { flex: 0 0 auto; }
+    .actionbar .grow { flex: 1; }
+    .item .actions .btn.sm { padding: 6px 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
   }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <span class="eyebrow">TorBox · Bulk Cache Check</span>
-    <h1>Drop torrents, see what's cached.</h1>
-    <p>Everything runs in your browser. Your API key stays local.</p>
+    <div class="titlebox">
+      <span class="eyebrow">TorBox · Cache Check</span>
+      <h1>Drop torrents, get cached ones instantly.</h1>
+      <p>Runs in your browser. Auto-checks as you add. Cached items add to TorBox in one tap.</p>
+    </div>
+    <button id="theme" class="icon-btn" type="button" aria-label="Toggle theme" title="Toggle theme">◐</button>
   </header>
 
   <div class="card">
-    <h2>Setup</h2>
-    <label class="field" for="key">TorBox API Key</label>
+    <h2>API Key <span class="subtle" id="key-status"></span></h2>
     <div class="row split">
       <input id="key" type="password" placeholder="Paste your TorBox API token"
         autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" />
@@ -161,49 +218,66 @@
         <label class="field" for="proxy">API Base override</label>
         <input id="proxy" type="text" placeholder="Leave blank — server proxies same-origin"
           autocapitalize="off" autocorrect="off" spellcheck="false" />
-        <div class="muted">Set this only if hosting the HTML separately without the Deno server proxy.</div>
+        <div class="muted">Only fill this if you're hosting <code>index.html</code> without the Deno proxy server.</div>
       </div>
     </details>
   </div>
 
   <div class="card">
-    <h2>Torrent files</h2>
+    <h2>Add torrents <span class="subtle">files, magnets, or infohashes</span></h2>
     <label class="drop" id="drop">
-      <span class="big">Tap to add .torrent files</span>
-      <span class="small">On iPhone use the Files picker → tap <b>Select</b> to choose multiple.</span>
+      <span class="big">Drop .torrent files or tap to select</span>
+      <span class="small">On iPhone, tap <b>Select</b> in the picker to add multiple.</span>
       <input type="file" id="file" multiple />
     </label>
+    <div style="margin-top:10px">
+      <label class="field" for="paste">Paste magnet links or infohashes (one per line)</label>
+      <textarea id="paste" placeholder="magnet:?xt=urn:btih:...&#10;abc123def456...&#10;magnet:?xt=urn:btih:..."></textarea>
+      <div class="row" style="margin-top:8px; justify-content:flex-end">
+        <button class="btn ghost sm" id="paste-add" type="button">Add pasted</button>
+      </div>
+    </div>
     <div id="err" class="err-banner" style="margin-top:12px; display:none"></div>
   </div>
 
   <div class="stats">
-    <div class="stat"><div class="k">Total</div><div class="v" id="s-total">0</div></div>
-    <div class="stat ok"><div class="k">Cached</div><div class="v" id="s-ok">0</div></div>
-    <div class="stat no"><div class="k">Uncached</div><div class="v" id="s-no">0</div></div>
-    <div class="stat pending"><div class="k">Pending</div><div class="v" id="s-pending">0</div></div>
+    <div class="stat filter active" data-filter="all"><div class="k">Total</div><div class="v" id="s-total">0</div></div>
+    <div class="stat ok filter" data-filter="cached"><div class="k">Cached</div><div class="v" id="s-ok">0</div></div>
+    <div class="stat no filter" data-filter="uncached"><div class="k">Uncached</div><div class="v" id="s-no">0</div></div>
+    <div class="stat pending filter" data-filter="pending"><div class="k">Pending</div><div class="v" id="s-pending">0</div></div>
   </div>
 
-  <div class="card" style="padding:0">
+  <div class="card listcard">
+    <div class="listhead">
+      <input type="text" id="search" class="grow" placeholder="Filter by name…" />
+      <select id="sort">
+        <option value="added">Order added</option>
+        <option value="name">Name A–Z</option>
+        <option value="size-desc">Size ↓</option>
+        <option value="size-asc">Size ↑</option>
+        <option value="status">Status (cached first)</option>
+      </select>
+    </div>
     <ul class="items" id="items">
-      <li class="empty">No files loaded yet.</li>
+      <li class="empty">No torrents yet.</li>
     </ul>
   </div>
 
   <div class="actionbar">
-    <button class="btn ghost" id="clear" disabled type="button">Clear</button>
-    <button class="btn ghost" id="export" disabled type="button">Export CSV</button>
-    <button class="btn primary" id="check" disabled type="button">Check cached</button>
+    <button class="btn primary grow" id="add-cached" disabled type="button">Add all cached</button>
+    <button class="btn ghost" id="recheck" disabled type="button" title="Re-check cache">↻</button>
+    <button class="btn ghost" id="export" disabled type="button" title="Export CSV">CSV</button>
+    <button class="btn danger" id="clear" disabled type="button" title="Clear list">×</button>
   </div>
 </div>
+<div class="toast" id="toast"></div>
 
 <script>
-// ---------- bencode (tolerant: strings return Uint8Array; caller decodes) ----------
+// ---------- bencode ----------
 function decodeBencode(buf) {
   const bytes = new Uint8Array(buf);
-  let i = 0;
-  let infoStart = -1, infoEnd = -1;
+  let i = 0, infoStart = -1, infoEnd = -1;
   const td = new TextDecoder('utf-8');
-  const td_latin = new TextDecoder('latin1');
   function readIntUntil(term) {
     let s = ''; const t = term.charCodeAt(0);
     while (bytes[i] !== t) { s += String.fromCharCode(bytes[i++]); }
@@ -211,13 +285,9 @@ function decodeBencode(buf) {
   }
   function decode() {
     const c = bytes[i];
-    if (c === 0x69) { i++; return readIntUntil('e'); } // 'i'
-    if (c === 0x6c) { // 'l'
-      i++; const a = [];
-      while (bytes[i] !== 0x65) a.push(decode());
-      i++; return a;
-    }
-    if (c === 0x64) { // 'd'
+    if (c === 0x69) { i++; return readIntUntil('e'); }
+    if (c === 0x6c) { i++; const a = []; while (bytes[i] !== 0x65) a.push(decode()); i++; return a; }
+    if (c === 0x64) {
       i++; const o = {};
       while (bytes[i] !== 0x65) {
         const kRaw = decode();
@@ -237,45 +307,106 @@ function decodeBencode(buf) {
     throw new Error('bencode error at byte ' + i);
   }
   const root = decode();
-  const infoBytes = infoStart >= 0 ? bytes.slice(infoStart, infoEnd) : null;
-  return { root, infoBytes, td, td_latin };
+  return { root, infoBytes: infoStart >= 0 ? bytes.slice(infoStart, infoEnd) : null };
 }
-
 function bytesToStr(u8) {
   if (!(u8 instanceof Uint8Array)) return String(u8 ?? '');
   try { return new TextDecoder('utf-8', {fatal: true}).decode(u8); }
   catch { return new TextDecoder('latin1').decode(u8); }
 }
-
 async function sha1Hex(bytes) {
   const digest = await crypto.subtle.digest('SHA-1', bytes);
   return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
-
 function humanBytes(n) {
   if (!n && n !== 0) return '';
   const u = ['B','KB','MB','GB','TB']; let i = 0;
   while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
   return n.toFixed(n >= 10 || i === 0 ? 0 : 1) + ' ' + u[i];
 }
+// base32 (magnet BTIH) → hex
+function b32ToHex(s) {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+  s = s.toUpperCase().replace(/=+$/, '');
+  let bits = '';
+  for (const c of s) {
+    const v = alphabet.indexOf(c);
+    if (v < 0) return null;
+    bits += v.toString(2).padStart(5, '0');
+  }
+  let hex = '';
+  for (let i = 0; i + 8 <= bits.length; i += 8) {
+    hex += parseInt(bits.slice(i, i + 8), 2).toString(16).padStart(2, '0');
+  }
+  return hex;
+}
 
 // ---------- state ----------
-const items = new Map(); // hash -> {name, size, status, filename, error?}
-const errFiles = [];     // {filename, error}
+const items = new Map(); // hash -> {name, size, status, filename?, added, error?}
+let filter = 'all';
+let sort = 'added';
+let search = '';
+let addCounter = 0;
 
 const el = id => document.getElementById(id);
 const keyInput = el('key'), proxyInput = el('proxy'), errBanner = el('err');
+const list = el('items'), toast = el('toast');
+
 if (localStorage.torboxKey) keyInput.value = localStorage.torboxKey;
 if (localStorage.torboxProxy) proxyInput.value = localStorage.torboxProxy;
 proxyInput.addEventListener('change', () => { localStorage.torboxProxy = proxyInput.value.trim(); });
+updateKeyStatus();
+keyInput.addEventListener('input', updateKeyStatus);
+function updateKeyStatus() {
+  el('key-status').textContent = keyInput.value.trim() ? 'set' : 'required';
+}
+
+// Theme toggle
+const themeBtn = el('theme');
+const savedTheme = localStorage.torboxTheme;
+if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+themeBtn.addEventListener('click', () => {
+  const current = document.documentElement.dataset.theme ||
+    (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = next;
+  localStorage.torboxTheme = next;
+});
 
 el('save').addEventListener('click', () => {
   localStorage.torboxKey = keyInput.value.trim();
-  el('save').textContent = 'Saved ✓';
-  setTimeout(() => el('save').textContent = 'Save', 1200);
+  updateKeyStatus();
+  showToast('API key saved locally');
 });
 
-// ---------- drop / file input ----------
+function showToast(msg, ms = 1800) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove('show'), ms);
+}
+
+// ---------- persistence ----------
+function persistItems() {
+  const arr = [...items.entries()].map(([h, v]) => [h, v]);
+  try { localStorage.torboxItems = JSON.stringify(arr); } catch {}
+}
+function restoreItems() {
+  try {
+    const raw = localStorage.torboxItems;
+    if (!raw) return;
+    const arr = JSON.parse(raw);
+    for (const [h, v] of arr) {
+      // Reset transient statuses so we re-check on load
+      if (v.status === 'checking' || v.status === 'idle') v.status = 'idle';
+      items.set(h, v);
+      if (v.added > addCounter) addCounter = v.added;
+    }
+  } catch {}
+}
+restoreItems();
+
+// ---------- add sources ----------
 const drop = el('drop'), fileInput = el('file');
 drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('hover'); });
 drop.addEventListener('dragleave', () => drop.classList.remove('hover'));
@@ -284,51 +415,112 @@ drop.addEventListener('drop', e => {
   handleFiles(e.dataTransfer.files);
 });
 fileInput.addEventListener('change', () => {
-  const files = Array.from(fileInput.files || []);
-  handleFiles(files);
-  fileInput.value = ''; // let iOS re-pick the same file / add more rounds
+  handleFiles(Array.from(fileInput.files || []));
+  fileInput.value = '';
+});
+
+el('paste-add').addEventListener('click', () => {
+  const txt = el('paste').value;
+  if (!txt.trim()) return;
+  const added = ingestText(txt);
+  el('paste').value = '';
+  if (added > 0) {
+    showToast('Added ' + added + ' item' + (added === 1 ? '' : 's'));
+    autoCheck();
+  } else {
+    errBanner.style.display = ''; errBanner.textContent = 'No valid magnets or infohashes found.';
+  }
+});
+// Also auto-ingest if user pastes into the empty textarea and blurs
+el('paste').addEventListener('paste', e => {
+  setTimeout(() => {
+    if (el('paste').value.trim()) el('paste-add').click();
+  }, 50);
+});
+
+// Accept magnet: drops
+document.body.addEventListener('paste', e => {
+  if (document.activeElement === el('paste') || document.activeElement === keyInput) return;
+  const t = (e.clipboardData || {}).getData?.('text');
+  if (t && (t.includes('magnet:') || /[0-9a-f]{40}/i.test(t))) {
+    const n = ingestText(t);
+    if (n > 0) { showToast('Added ' + n + ' from clipboard'); autoCheck(); }
+  }
 });
 
 async function handleFiles(fileList) {
   const files = Array.from(fileList);
   if (!files.length) return;
-  errFiles.length = 0;
   errBanner.style.display = 'none';
-
+  const errs = [];
+  let added = 0;
   for (const f of files) {
     try {
       const buf = await f.arrayBuffer();
       const { root, infoBytes } = decodeBencode(buf);
-      if (!infoBytes) throw new Error('no info dict in torrent');
+      if (!infoBytes) throw new Error('no info dict');
       const hash = await sha1Hex(infoBytes);
       const info = root.info || {};
       let size = 0;
       if (typeof info.length === 'number') size = info.length;
-      else if (Array.isArray(info.files)) {
-        size = info.files.reduce((a, x) => a + (typeof x.length === 'number' ? x.length : 0), 0);
-      }
+      else if (Array.isArray(info.files)) size = info.files.reduce((a, x) => a + (typeof x.length === 'number' ? x.length : 0), 0);
       const name = bytesToStr(info.name) || f.name.replace(/\.torrent$/i, '');
-      if (!items.has(hash)) items.set(hash, { name, size, status: 'idle', filename: f.name });
-    } catch (e) {
-      errFiles.push({ filename: f.name, error: e.message || String(e) });
-    }
+      if (!items.has(hash)) {
+        items.set(hash, { name, size, status: 'idle', filename: f.name, added: ++addCounter });
+        added++;
+      }
+    } catch (e) { errs.push(f.name + ': ' + (e.message || e)); }
   }
-  if (errFiles.length) {
+  if (errs.length) {
     errBanner.style.display = '';
-    errBanner.textContent = errFiles.length + ' file(s) could not be parsed: ' +
-      errFiles.slice(0, 3).map(x => x.filename + ' — ' + x.error).join(' · ') +
-      (errFiles.length > 3 ? ' …' : '');
+    errBanner.textContent = errs.length + ' file(s) failed: ' +
+      errs.slice(0, 3).join(' · ') + (errs.length > 3 ? ' …' : '');
   }
-  render();
+  if (added > 0) { showToast('Added ' + added + ' file' + (added === 1 ? '' : 's')); autoCheck(); }
+  render(); persistItems();
 }
 
-// ---------- render ----------
-const list = el('items');
+function ingestText(txt) {
+  let added = 0;
+  const lines = txt.split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+  for (const line of lines) {
+    let hash = null, name = null;
+    if (line.startsWith('magnet:')) {
+      const m = line.match(/xt=urn:btih:([0-9a-fA-F]{40}|[A-Z2-7]{32})/);
+      if (m) {
+        hash = m[1].length === 40 ? m[1].toLowerCase() : b32ToHex(m[1]);
+        const dn = line.match(/[?&]dn=([^&]+)/);
+        if (dn) name = decodeURIComponent(dn[1].replace(/\+/g, ' '));
+      }
+    } else if (/^[0-9a-fA-F]{40}$/.test(line)) {
+      hash = line.toLowerCase();
+    } else if (/^[A-Z2-7]{32}$/i.test(line)) {
+      hash = b32ToHex(line);
+    }
+    if (hash && !items.has(hash)) {
+      items.set(hash, { name: name || hash, size: 0, status: 'idle', added: ++addCounter });
+      added++;
+    }
+  }
+  render(); persistItems();
+  return added;
+}
+
+// ---------- rendering ----------
+function statusRank(s) { return { cached: 0, checking: 1, idle: 1, uncached: 2, error: 3 }[s] ?? 9; }
+function matchesFilter(v) {
+  if (filter === 'cached') return v.status === 'cached';
+  if (filter === 'uncached') return v.status === 'uncached';
+  if (filter === 'pending') return v.status === 'checking' || v.status === 'idle';
+  return true;
+}
+
 function render() {
   const n = items.size;
-  el('check').disabled = n === 0;
+  el('add-cached').disabled = ![...items.values()].some(v => v.status === 'cached');
   el('clear').disabled = n === 0;
   el('export').disabled = n === 0;
+  el('recheck').disabled = n === 0;
 
   let ok = 0, no = 0, pend = 0;
   for (const v of items.values()) {
@@ -340,37 +532,71 @@ function render() {
   el('s-ok').textContent = ok;
   el('s-no').textContent = no;
   el('s-pending').textContent = pend;
+  document.querySelectorAll('.stat.filter').forEach(s =>
+    s.classList.toggle('active', s.dataset.filter === filter));
 
-  if (n === 0) {
-    list.innerHTML = '<li class="empty">No files loaded yet.</li>';
-    return;
+  let arr = [...items.entries()].map(([h, v]) => ({ hash: h, ...v }));
+  if (search) {
+    const q = search.toLowerCase();
+    arr = arr.filter(x => (x.name || '').toLowerCase().includes(q) || x.hash.includes(q));
   }
-  const html = [...items.entries()].map(([hash, v]) => {
-    const pill = {
+  arr = arr.filter(matchesFilter);
+  arr.sort((a, b) => {
+    if (sort === 'name') return (a.name || '').localeCompare(b.name || '');
+    if (sort === 'size-desc') return (b.size || 0) - (a.size || 0);
+    if (sort === 'size-asc') return (a.size || 0) - (b.size || 0);
+    if (sort === 'status') return statusRank(a.status) - statusRank(b.status) || a.added - b.added;
+    return a.added - b.added;
+  });
+
+  if (!n) { list.innerHTML = '<li class="empty">No torrents yet. Drop files, paste magnets, or paste infohashes above.</li>'; return; }
+  if (!arr.length) { list.innerHTML = '<li class="empty">Nothing matches this filter.</li>'; return; }
+
+  list.innerHTML = arr.map(v => {
+    const pillMap = {
       idle:     '<span class="pill idle">ready</span>',
       checking: '<span class="pill pending">checking</span>',
       cached:   '<span class="pill ok">cached</span>',
       uncached: '<span class="pill no">uncached</span>',
       error:    '<span class="pill err">error</span>',
-    }[v.status];
+    };
+    const pill = pillMap[v.status] || pillMap.idle;
+    const addBtn = v.status === 'cached'
+      ? `<button class="btn primary sm" data-act="add" data-hash="${v.hash}">Add</button>` : '';
+    const delBtn = `<button class="btn ghost sm" data-act="del" data-hash="${v.hash}" title="Remove">×</button>`;
     const metaBits = [];
     if (v.size) metaBits.push(humanBytes(v.size));
-    metaBits.push(hash.slice(0, 12) + '…');
+    metaBits.push(v.hash.slice(0, 12) + '…');
+    if (v.error) metaBits.push(v.error);
     return `<li class="item">
       <div class="name" title="${escapeHtml(v.name)}">${escapeHtml(v.name)}</div>
-      <div class="status">${pill}</div>
-      <div class="meta">${metaBits.join(' · ')}</div>
+      <div class="meta">${metaBits.map(escapeHtml).join(' · ')}</div>
+      <div class="actions">${pill}${addBtn}${delBtn}</div>
     </li>`;
   }).join('');
-  list.innerHTML = html;
+  list.querySelectorAll('button[data-act]').forEach(b => {
+    b.addEventListener('click', () => {
+      const h = b.dataset.hash;
+      if (b.dataset.act === 'del') { items.delete(h); render(); persistItems(); }
+      else if (b.dataset.act === 'add') addToTorbox(h, items.get(h).name, b);
+    });
+  });
 }
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
-el('clear').addEventListener('click', () => { items.clear(); errFiles.length = 0;
-  errBanner.style.display = 'none'; render(); });
+// ---------- controls ----------
+document.querySelectorAll('.stat.filter').forEach(s => {
+  s.addEventListener('click', () => { filter = s.dataset.filter; render(); });
+});
+el('search').addEventListener('input', e => { search = e.target.value.trim(); render(); });
+el('sort').addEventListener('change', e => { sort = e.target.value; render(); });
 
+el('clear').addEventListener('click', () => {
+  if (!confirm('Clear all ' + items.size + ' items?')) return;
+  items.clear(); addCounter = 0; render(); persistItems();
+});
 el('export').addEventListener('click', () => {
   const rows = [['status','name','size_bytes','infohash']];
   for (const [h, v] of items) rows.push([v.status, v.name, v.size, h]);
@@ -381,40 +607,85 @@ el('export').addEventListener('click', () => {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 
-// ---------- checker ----------
-el('check').addEventListener('click', async () => {
-  const key = keyInput.value.trim();
-  if (!key) { errBanner.style.display = ''; errBanner.textContent = 'API key required.'; return; }
-  errBanner.style.display = 'none';
-  el('check').disabled = true;
+el('recheck').addEventListener('click', () => {
+  for (const v of items.values()) v.status = 'idle';
+  render(); autoCheck();
+});
 
-  const hashes = [...items.keys()];
-  for (const h of hashes) items.get(h).status = 'checking';
+el('add-cached').addEventListener('click', async () => {
+  const cached = [...items.entries()].filter(([, v]) => v.status === 'cached');
+  if (!cached.length) return;
+  if (!confirm('Add ' + cached.length + ' cached torrent' + (cached.length === 1 ? '' : 's') + ' to TorBox?')) return;
+  el('add-cached').disabled = true;
+  let ok = 0, fail = 0;
+  for (const [h, v] of cached) {
+    try { await addToTorboxSilent(h, v.name); ok++; }
+    catch { fail++; }
+  }
+  showToast(`Added ${ok} to TorBox${fail ? ' · ' + fail + ' failed' : ''}`, 3000);
+  el('add-cached').disabled = false;
+});
+
+async function addToTorboxSilent(hash, title) {
+  const key = keyInput.value.trim();
+  const magnet = 'magnet:?xt=urn:btih:' + hash + '&dn=' + encodeURIComponent(title || hash);
+  const form = new FormData();
+  form.append('magnet', magnet);
+  form.append('add_only_if_cached', 'true');
+  const base = (proxyInput.value.trim() || '').replace(/\/$/, '');
+  const r = await fetch(base + '/v1/api/torrents/createtorrent', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + key }, body: form,
+  });
+  const j = await r.json();
+  if (!j.success) throw new Error(j.detail || j.error || 'add failed');
+}
+
+async function addToTorbox(hash, title, btn) {
+  const key = keyInput.value.trim();
+  if (!key) { showToast('Save your API key first'); return; }
+  btn.disabled = true; btn.textContent = '…';
+  try { await addToTorboxSilent(hash, title); btn.textContent = '✓'; showToast('Added to TorBox'); }
+  catch (e) { btn.textContent = 'err'; btn.title = e.message || String(e); btn.disabled = false; }
+}
+
+// ---------- cache checking (auto) ----------
+let checkInFlight = false;
+let checkQueued = false;
+async function autoCheck() {
+  if (!keyInput.value.trim()) return;
+  if (checkInFlight) { checkQueued = true; return; }
+  const pending = [...items.entries()].filter(([, v]) => v.status === 'idle');
+  if (!pending.length) return;
+  checkInFlight = true;
+  for (const [, v] of pending) v.status = 'checking';
   render();
 
   const CHUNK = 50;
-  for (let i = 0; i < hashes.length; i += CHUNK) {
-    const chunk = hashes.slice(i, i + CHUNK);
-    const qs = chunk.map(h => 'hash=' + encodeURIComponent(h)).join('&') + '&format=object&list_files=false';
+  for (let i = 0; i < pending.length; i += CHUNK) {
+    const chunk = pending.slice(i, i + CHUNK);
+    const qs = chunk.map(([h]) => 'hash=' + h).join('&') + '&format=object&list_files=false';
     const base = (proxyInput.value.trim() || '').replace(/\/$/, '');
-    const url = base + '/v1/api/torrents/checkcached?' + qs;
     try {
-      const r = await fetch(url, { headers: { Authorization: 'Bearer ' + key } });
+      const r = await fetch(base + '/v1/api/torrents/checkcached?' + qs,
+        { headers: { Authorization: 'Bearer ' + keyInput.value.trim() } });
       const text = await r.text();
-      let j; try { j = JSON.parse(text); } catch { throw new Error('bad JSON: ' + text.slice(0, 120)); }
+      let j; try { j = JSON.parse(text); } catch { throw new Error('bad JSON'); }
       if (!j.success) throw new Error(j.detail || j.error || ('HTTP ' + r.status));
-      const data = j.data || {};
-      const found = new Set(Object.keys(data).map(k => k.toLowerCase()));
-      for (const h of chunk) items.get(h).status = found.has(h.toLowerCase()) ? 'cached' : 'uncached';
+      const found = new Set(Object.keys(j.data || {}).map(k => k.toLowerCase()));
+      for (const [h, v] of chunk) v.status = found.has(h) ? 'cached' : 'uncached';
     } catch (e) {
-      for (const h of chunk) items.get(h).status = 'error';
-      errBanner.style.display = '';
-      errBanner.textContent = 'Request failed: ' + (e.message || e);
+      for (const [, v] of chunk) { v.status = 'error'; v.error = e.message || String(e); }
+      errBanner.style.display = ''; errBanner.textContent = 'Cache check failed: ' + (e.message || e);
     }
-    render();
+    render(); persistItems();
   }
-  el('check').disabled = false;
-});
+  checkInFlight = false;
+  if (checkQueued) { checkQueued = false; autoCheck(); }
+}
+
+// Initial render + auto-check anything restored
+render();
+if (keyInput.value.trim()) autoCheck();
 </script>
 </body>
 </html>
