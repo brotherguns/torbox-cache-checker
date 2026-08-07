@@ -6,10 +6,6 @@ services:
     command: ["deno", "run", "--allow-net", "--allow-read", "--allow-env", "main.ts"]
     environment:
       - PORT=8000
-      - PROWLARR_URL=http://host.docker.internal:9696
-      - PROWLARR_API_KEY=${PROWLARR_API_KEY:-}
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     volumes:
       - ./main.ts:/app/main.ts:ro
       - ./index.html:/app/index.html:ro
