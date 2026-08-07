@@ -474,25 +474,58 @@ el('run-search').addEventListener('click', async () => {
     if (!Array.isArray(results) || !results.length) {
       searchList.innerHTML = '<li class="empty">No results.</li>'; return;
     }
-    const items = results
-      .filter(x => x.infoHash || (x.guid && /[0-9a-f]{40}/i.test(x.guid)))
-      .map(x => ({
+    const withHash = results.map(x => {
+      const direct = x.infoHash || (x.guid && x.guid.match && x.guid.match(/[0-9a-f]{40}/i)?.[0]);
+      return {
         title: x.title,
         size: x.size || 0,
         seeders: x.seeders ?? 0,
         indexer: x.indexer || '',
-        hash: (x.infoHash || x.guid.match(/[0-9a-f]{40}/i)[0]).toLowerCase(),
-        magnet: x.magnetUrl || x.downloadUrl || null,
-      }))
-      .sort((a, b) => b.seeders - a.seeders)
-      .slice(0, 60);
+        hash: direct ? direct.toLowerCase() : null,
+        downloadUrl: x.downloadUrl || null,
+        magnetUrl: x.magnetUrl || null,
+      };
+    })
+    .filter(x => x.hash || x.downloadUrl || x.magnetUrl)
+    .sort((a, b) => b.seeders - a.seeders)
+    .slice(0, 60);
 
-    if (!items.length) {
-      searchList.innerHTML = '<li class="empty">Results had no infohashes.</li>'; return;
+    if (!withHash.length) {
+      searchList.innerHTML = '<li class="empty">No usable results.</li>'; return;
     }
 
+    // Show immediately with 'resolving' state for missing hashes
+    const items = withHash;
     renderSearch(items, {});
-    const hashes = items.map(i => i.hash);
+
+    // Fetch missing hashes in parallel (bounded)
+    const needsHash = items.filter(x => !x.hash);
+    const CONC = 6;
+    for (let i = 0; i < needsHash.length; i += CONC) {
+      const batch = needsHash.slice(i, i + CONC);
+      await Promise.all(batch.map(async it => {
+        if (it.magnetUrl) {
+          const m = it.magnetUrl.match(/xt=urn:btih:([0-9a-fA-F]{40}|[A-Z2-7]{32})/);
+          if (m) { it.hash = m[1].toLowerCase(); return; }
+        }
+        if (it.downloadUrl) {
+          try {
+            const r = await fetch('/hash-from-url?url=' + encodeURIComponent(it.downloadUrl));
+            const j = await r.json();
+            if (j.hash) it.hash = j.hash.toLowerCase();
+          } catch {}
+        }
+      }));
+      renderSearch(items, {});
+    }
+
+    // Drop any that still don't have a hash
+    for (let i = items.length - 1; i >= 0; i--) if (!items[i].hash) items.splice(i, 1);
+    if (!items.length) {
+      searchList.innerHTML = '<li class="empty">Couldn\'t extract infohashes from any result.</li>'; return;
+    }
+
+    const hashes = items.map(x => x.hash);
     const CHUNK = 50;
     const cached = {};
     for (let i = 0; i < hashes.length; i += CHUNK) {
@@ -504,7 +537,7 @@ el('run-search').addEventListener('click', async () => {
       if (cj.success && cj.data) {
         for (const k of Object.keys(cj.data)) cached[k.toLowerCase()] = true;
       }
-      renderSearch(items, cached, i + CHUNK);
+      renderSearch(items, cached, Math.min(i + CHUNK, hashes.length));
     }
     renderSearch(items, cached, hashes.length, true);
   } catch (e) {
@@ -519,15 +552,17 @@ el('run-search').addEventListener('click', async () => {
 function renderSearch(items, cached, checkedTo = 0, done = false) {
   searchList.innerHTML = items.map((it, i) => {
     let pill;
-    if (cached[it.hash]) pill = '<span class="pill ok">cached</span>';
+    if (!it.hash) pill = '<span class="pill pending">resolving</span>';
+    else if (cached[it.hash]) pill = '<span class="pill ok">cached</span>';
     else if (i < checkedTo) pill = '<span class="pill no">uncached</span>';
     else pill = '<span class="pill pending">checking</span>';
-    const addBtn = cached[it.hash]
+    const addBtn = it.hash && cached[it.hash]
       ? `<button class="btn primary" data-hash="${it.hash}" data-title="${escapeHtml(it.title)}">Add</button>`
       : '';
+    const hashHint = it.hash ? it.hash.slice(0,10) + '…' : 'no hash yet';
     return `<li class="item result">
       <div class="name" title="${escapeHtml(it.title)}">${escapeHtml(it.title)}</div>
-      <div class="meta" style="grid-column:1/2">${humanBytes(it.size)} · ${it.seeders} seeders · ${escapeHtml(it.indexer)} · ${it.hash.slice(0,10)}…</div>
+      <div class="meta" style="grid-column:1/2">${humanBytes(it.size)} · ${it.seeders} seeders · ${escapeHtml(it.indexer)} · ${hashHint}</div>
       <div class="status">${pill}</div>
       <div class="add">${addBtn}</div>
     </li>`;

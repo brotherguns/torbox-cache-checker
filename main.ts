@@ -58,6 +58,50 @@ function json(o: unknown, status = 200) {
   });
 }
 
+async function sha1(bytes: Uint8Array): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-1", bytes);
+  return Array.from(new Uint8Array(d)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashFromDownloadUrl(downloadUrl: string): Promise<string | null> {
+  const r = await fetch(downloadUrl, { redirect: "follow" });
+  if (!r.ok) return null;
+  const buf = new Uint8Array(await r.arrayBuffer());
+  // Reuse the parser above but do sha1 async
+  let i = 0, infoStart = -1, infoEnd = -1;
+  const td = new TextDecoder("utf-8");
+  const readIntUntil = (term: number) => {
+    let s = "";
+    while (buf[i] !== term) { s += String.fromCharCode(buf[i++]); }
+    i++; return parseInt(s, 10);
+  };
+  const parse = () => {
+    const c = buf[i];
+    if (c === 0x69) { i++; readIntUntil(0x65); return; }
+    if (c === 0x6c) { i++; while (buf[i] !== 0x65) parse(); i++; return; }
+    if (c === 0x64) {
+      i++;
+      while (buf[i] !== 0x65) {
+        // key is bytestring
+        const kLen = readIntUntil(0x3a);
+        const key = td.decode(buf.subarray(i, i + kLen));
+        i += kLen;
+        const vStart = i; parse(); const vEnd = i;
+        if (key === "info") { infoStart = vStart; infoEnd = vEnd; }
+      }
+      i++; return;
+    }
+    if (c >= 0x30 && c <= 0x39) {
+      const len = readIntUntil(0x3a);
+      i += len; return;
+    }
+    throw new Error("bencode error at " + i);
+  };
+  try { parse(); } catch { return null; }
+  if (infoStart < 0) return null;
+  return await sha1(buf.subarray(infoStart, infoEnd));
+}
+
 async function resolveImdb(id: string) {
   // Uses IMDb's public suggestion endpoint (same one their own site autocomplete hits).
   const url = `https://v3.sg.media-imdb.com/suggestion/t/${id}.json`;
@@ -75,6 +119,16 @@ Deno.serve({ port: PORT }, async (req) => {
   if (url.pathname === "/health") return json({ ok: true, prowlarr: !!PROWLARR_API_KEY });
   const imdb = url.pathname.match(/^\/resolve-imdb\/(tt\d+)$/);
   if (imdb) return resolveImdb(imdb[1]);
+  if (url.pathname === "/hash-from-url") {
+    const dl = url.searchParams.get("url");
+    if (!dl) return json({ error: "url required" }, 400);
+    try {
+      const h = await hashFromDownloadUrl(dl);
+      return h ? json({ hash: h }) : json({ error: "no info dict" }, 422);
+    } catch (e) {
+      return json({ error: String(e) }, 500);
+    }
+  }
   if (url.pathname.startsWith("/prowlarr/")) return proxyProwlarr(req, url);
   if (url.pathname.startsWith("/v1/")) return proxyTorbox(req, url);
   if (url.pathname === "/" || url.pathname === "/index.html") {
