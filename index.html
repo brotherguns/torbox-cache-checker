@@ -683,9 +683,7 @@ async function autoCheck() {
   if (checkQueued) { checkQueued = false; autoCheck(); }
 }
 
-// Initial render + auto-check anything restored
 render();
-if (keyInput.value.trim()) autoCheck();
 </script>
 </body>
 </html>
