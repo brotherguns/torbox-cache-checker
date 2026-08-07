@@ -435,22 +435,42 @@ el('run-search').addEventListener('click', async () => {
 
   try {
     const imdbMatch = q.match(/^tt(\d{6,10})$/i);
-    let urls;
+    const urls = [];
+    let resolvedTitle = null;
     if (imdbMatch) {
-      // Query movie + tv IMDb search in parallel; concat results
-      const id = imdbMatch[1];
-      urls = [
-        '/prowlarr/api/v1/search?type=movie&imdbId=tt' + id,
-        '/prowlarr/api/v1/search?type=tvsearch&imdbId=' + id,
-      ];
+      const id = 'tt' + imdbMatch[1];
+      // Try IMDb-ID search on both endpoints
+      urls.push('/prowlarr/api/v1/search?type=movie&imdbId=' + id);
+      urls.push('/prowlarr/api/v1/search?type=tvsearch&imdbId=' + imdbMatch[1]);
+      // AND resolve to a title for a plain text search (private trackers rarely index by IMDb)
+      try {
+        const rr = await fetch('/resolve-imdb/' + id);
+        if (rr.ok) {
+          const info = await rr.json();
+          if (info.title) {
+            resolvedTitle = info.title + (info.year ? ' (' + info.year + ')' : '');
+            urls.push('/prowlarr/api/v1/search?type=search&query=' + encodeURIComponent(info.title));
+          }
+        }
+      } catch {}
     } else {
-      urls = ['/prowlarr/api/v1/search?type=search&query=' + encodeURIComponent(q)];
+      urls.push('/prowlarr/api/v1/search?type=search&query=' + encodeURIComponent(q));
+    }
+    if (resolvedTitle) {
+      searchList.innerHTML = '<li class="empty">Searching “' + escapeHtml(resolvedTitle) + '”…</li>';
     }
     const responses = await Promise.all(urls.map(u => fetch(u)));
     for (const r of responses) {
       if (!r.ok) throw new Error('Prowlarr ' + r.status + (r.status === 500 ? ' — is PROWLARR_API_KEY set?' : ''));
     }
-    const results = (await Promise.all(responses.map(r => r.json()))).flat();
+    const raw = (await Promise.all(responses.map(r => r.json()))).flat();
+    // Dedupe by guid + infoHash
+    const seen = new Set();
+    const results = raw.filter(x => {
+      const key = (x.infoHash || '') + '|' + (x.guid || x.title);
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
     if (!Array.isArray(results) || !results.length) {
       searchList.innerHTML = '<li class="empty">No results.</li>'; return;
     }

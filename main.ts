@@ -58,9 +58,23 @@ function json(o: unknown, status = 200) {
   });
 }
 
+async function resolveImdb(id: string) {
+  // Uses IMDb's public suggestion endpoint (same one their own site autocomplete hits).
+  const url = `https://v3.sg.media-imdb.com/suggestion/t/${id}.json`;
+  const r = await fetch(url);
+  if (!r.ok) return json({ error: "imdb resolve failed", status: r.status }, 502);
+  const j = await r.json();
+  const hit = (j.d || []).find((x: any) => x.id === id) || (j.d || [])[0];
+  if (!hit) return json({ error: "not found" }, 404);
+  const isSeries = /series|TV/i.test(hit.qid || hit.q || "");
+  return json({ id, title: hit.l, year: hit.y, kind: isSeries ? "tv" : "movie" });
+}
+
 Deno.serve({ port: PORT }, async (req) => {
   const url = new URL(req.url);
   if (url.pathname === "/health") return json({ ok: true, prowlarr: !!PROWLARR_API_KEY });
+  const imdb = url.pathname.match(/^\/resolve-imdb\/(tt\d+)$/);
+  if (imdb) return resolveImdb(imdb[1]);
   if (url.pathname.startsWith("/prowlarr/")) return proxyProwlarr(req, url);
   if (url.pathname.startsWith("/v1/")) return proxyTorbox(req, url);
   if (url.pathname === "/" || url.pathname === "/index.html") {
